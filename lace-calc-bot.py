@@ -1,9 +1,11 @@
+import json
 import logging
 import math
 import os
 import prettytable as pt
 
 from telegram import (
+    Bot,
     ParseMode,
     ReplyKeyboardMarkup,
     ReplyKeyboardRemove,
@@ -11,6 +13,7 @@ from telegram import (
 )
 
 from telegram.ext import (
+    Dispatcher,
     Updater,
     CommandHandler,
     MessageHandler,
@@ -19,10 +22,11 @@ from telegram.ext import (
     CallbackContext,
 )
 
+TOKEN = os.environ["TG_BOT_TOKEN"] 
+
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO
 )
-
 logger = logging.getLogger(__name__)
 
 CHOOSING, TYPING_REPLY, TYPING_CHOICE = range(3)
@@ -194,11 +198,7 @@ def done(update, context):
     return ConversationHandler.END
 
 
-def main():
-    TOKEN = os.environ["TG_BOT_TOKEN"] 
-    updater = Updater(TOKEN)
-    dispatcher = updater.dispatcher
-
+def setup(dispatcher):
     conv_handler = ConversationHandler(
         entry_points=[ CommandHandler('start', start) ],
         states = {
@@ -225,9 +225,29 @@ def main():
     dispatcher.add_handler(conv_handler)
     dispatcher.add_error_handler(error_handler)
 
-    updater.start_polling()
-    updater.idle()
+
+def webhook(event, context):
+    global bot
+    global dispatcher
+
+    if event.get('httpMethod') == 'POST' and event.get('body'): 
+        logger.info('Message received')
+        update = Update.de_json(json.loads(event.get('body')), bot)
+        dispatcher.process_update(update)
+
+    return {
+        'statusCode': 200,
+        'headers': {'Content-Type': 'application/json'},
+        'body': json.dumps('ok')
+    }
 
 
 if __name__ == '__main__':
-    main()
+    updater = Updater(TOKEN)
+    setup(updater.dispatcher)
+    updater.start_polling()
+    updater.idle()
+else:
+    bot = Bot(TOKEN)
+    dispatcher = Dispatcher(bot, None, workers=0)
+    setup(dispatcher)
