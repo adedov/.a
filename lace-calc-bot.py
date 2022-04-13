@@ -192,11 +192,13 @@ def done(update, context):
 
     update.message.reply_markdown_v2(
         text,
-        reply_markup=ReplyKeyboardRemove(),
+        reply_markup=mainkb_markup,
     )
 
     user_data.clear()
-    return ConversationHandler.END
+
+    # start over again
+    return CHOOSING # ConversationHandler.END
 
 
 def setup(dispatcher):
