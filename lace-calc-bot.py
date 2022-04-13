@@ -30,6 +30,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 CHOOSING, TYPING_REPLY, TYPING_CHOICE = range(3)
+DONE = "Расчитать"
 
 param_names = {
     "skirt_form"    : "Форма юбки",
@@ -50,7 +51,7 @@ reply_keyboard = [
     [ param_names["skirt_form"] ],
     [ param_names["skirt_len"], param_names["waist_len"] ],
     [ param_names["density_st"], param_names["density_row"] ],
-    [ "Done" ],
+    [ DONE ],
 ]
 mainkb_markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
 
@@ -204,22 +205,22 @@ def setup(dispatcher):
         states = {
             CHOOSING: [
                 MessageHandler(
-                    Filters.text & ~(Filters.command | Filters.regex('^Done$')), regular_choice
+                    Filters.text & ~(Filters.command | Filters.regex(f'^{DONE}$')), regular_choice
                 )
             ],
             TYPING_CHOICE: [
                 MessageHandler(
-                    Filters.text & ~(Filters.command | Filters.regex('^Done$')), regular_choice
+                    Filters.text & ~(Filters.command | Filters.regex(f'^{DONE}$')), regular_choice
                 )
             ],
             TYPING_REPLY: [
                 MessageHandler(
-                    Filters.text & ~(Filters.command | Filters.regex('^Done$')),
+                    Filters.text & ~(Filters.command | Filters.regex(f'^{DONE}$')),
                     received_information,
                 )
             ],
         },
-        fallbacks=[MessageHandler(Filters.regex('^Done$'), done)],
+        fallbacks=[MessageHandler(Filters.regex(f'^{DONE}$'), done)],
     )
 
     dispatcher.add_handler(conv_handler)
